@@ -148,7 +148,7 @@ After completing the local environment setup:
 - Terraform will provision the required AWS infrastructure.
 - Ansible and Helm will be configured and executed directly from the bastion host.
 
-Refer to the [documentation directory](./documentation) for detailed instructions on provisioning and deployment.
+Refer to the [documentation directory](./) for detailed instructions on provisioning and deployment.
 
 
 
