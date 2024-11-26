@@ -46,8 +46,12 @@ Install the following tools on your local machine:
 ---
 
 ## **2. Configure AWS CLI**
-### Make sure AWS is setup before executing this step. 
-Refer to the [aws-setup.md](./aws-setup.md) for detailed instructions on setting up AWS cloud
+<div style="background-color: #fff3cd; border-left: 6px solid #ffeeba; padding: 10px; color: #000; font-family: Arial, sans-serif;">
+
+**Note:** Make sure AWS is setup before executing this step. 
+Refer to the [aws-setup.md](./aws-setup.md) for detailed instructions on setting up AWS cloud.
+
+</div>
 
 Run the following command to set up your AWS credentials:
 ```bash
