@@ -403,3 +403,6 @@ state/
 .terraform/
 *.tfstate
 *.tfstate.*
+
+# Ansible local creation 
+ansible/inventory.ini

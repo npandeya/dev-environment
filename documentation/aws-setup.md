@@ -64,22 +64,22 @@ This guide walks you through setting up AWS Cloud from scratch, including signin
 
 1. Generate a private key locally:
    ```bash
-   ssh-keygen -t rsa -b 2048 -f ~/.ssh/aws-key.pem
-   chmod 600 ~/.ssh/aws-key.pem
+   ssh-keygen -t rsa -b 2048 -f ~/.ssh/dev-env.pem
+   chmod 600 ~/.ssh/dev-env.pem
    ```
 2. Import the public key into AWS:
    - Log in to the AWS Management Console.
    - Navigate to EC2 > Key Pairs > Create Key Pair > Import Key Pair.
    - Upload the public key from:
       ```bash 
-      cat ~/.ssh/aws-key.pem.pub
+      cat ~/.ssh/dev-env.pem.pub
       ```
 3. Assign the key pair to your EC2 instance during its creation.
 
 ## **6. Verify Setup** 
 ```bash 
 aws sts get-caller-identity
-ssh -i ~/.ssh/aws-key.pem ec2-user@<EC2_INSTANCE_PUBLIC_IP>
+ssh -i ~/.ssh/dev-env.pem ec2-user@<EC2_INSTANCE_PUBLIC_IP>
 ```
 
 ## **7. Next Steps**

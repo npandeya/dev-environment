@@ -1,0 +1,105 @@
+- name: Setup Bastion Host
+  hosts: bastion
+  become: true
+  tasks:
+    # Install dependencies
+    - name: Install dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+        state: present
+        update_cache: yes
+
+    # Download kubectl
+    - name: Download kubectl binary
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      args:
+        executable: /bin/bash
+
+    # Move kubectl to /usr/local/bin
+    - name: Move kubectl to /usr/local/bin
+      command: mv kubectl /usr/local/bin/kubectl
+
+    # Set executable permissions
+    - name: Set permissions for kubectl
+      file:
+        path: /usr/local/bin/kubectl
+        mode: '0755'
+
+    # Verify kubectl installation
+    - name: Verify kubectl version
+      command: kubectl version --client --output=yaml
+
+    # Install Helm
+    - name: Install helm
+      shell: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+      args:
+        executable: /bin/bash
+
+    # Create .kube directory
+    - name: Create .kube directory
+      file:
+        path: /home/ubuntu/.kube
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    # Fetch kubeconfig from MicroK8s
+    - name: Retrieve kubeconfig from MicroK8s
+      command: microk8s config
+      delegate_to: "{{ groups['control_nodes'][0] }}"
+      register: kubeconfig_output
+
+    - name: Save kubeconfig to bastion
+      copy:
+        content: "{{ kubeconfig_output.stdout }}"
+        dest: /home/ubuntu/.kube/config
+
+    - name: Set permissions for kubeconfig
+      file:
+        path: /home/ubuntu/.kube/config
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    # Add Kubernetes aliases
+    - name: Create Kubernetes aliases script
+      copy:
+        dest: /home/ubuntu/.kube_aliases
+        content: |
+          alias k='kubectl'
+          alias kga='kubectl get all'
+          alias kgp='kubectl get pods'
+          alias kdp='kubectl delete pods --grace-period=0 --force'
+          alias kgn='kubectl get nodes'
+          alias kgns='kubectl get namespaces'
+          alias kns='kubectl config set-context --current --namespace'
+          alias kaf='kubectl apply -f'
+          alias kdf='kubectl delete -f'
+          alias kl='kubectl logs'
+          alias kd='kubectl describe'
+          alias ke='kubectl exec -it'
+          alias kctx='kubectl config use-context'
+          alias kc='kubectl config'
+          alias kdr='kubectl rollout restart'
+          alias kex='kubectl explain'
+
+    - name: Set ownership for Kubernetes aliases script
+      file:
+        path: /home/ubuntu/.kube_aliases
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Source Kubernetes aliases in .bashrc
+      become_user: ubuntu
+      lineinfile:
+        path: /home/ubuntu/.bashrc
+        line: "source /home/ubuntu/.kube_aliases"
+        state: present

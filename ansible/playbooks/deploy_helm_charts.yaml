@@ -1,0 +1,8 @@
+- name: Deploy Helm charts
+  hosts: bastion
+  tasks:
+    - name: Add Helm repo
+      command: helm repo add stable https://charts.helm.sh/stable
+
+    - name: Update Helm repo
+      command: helm repo update

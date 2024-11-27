@@ -1,0 +1,18 @@
+- name: Generate join command for a worker node
+  command: microk8s add-node
+  register: worker_join_output
+
+- name: Extract worker join command
+  set_fact:
+    current_worker_join_command: "{{ worker_join_output.stdout_lines | select('match', '^microk8s join ') | list | first }}"
+
+- name: Distribute join command to worker node
+  copy:
+    content: "{{ current_worker_join_command }}"
+    dest: /tmp/worker-join-command.txt
+  delegate_to: "{{ item }}"
+
+- name: Join worker node to the cluster
+  shell: |
+    cat /tmp/worker-join-command.txt | bash
+  delegate_to: "{{ item }}"

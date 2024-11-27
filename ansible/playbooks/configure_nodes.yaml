@@ -1,0 +1,26 @@
+- name: Enable MicroK8s add-ons on primary control node
+  hosts: control_nodes[0]
+  become: true
+  tasks:
+    - name: Enable MicroK8s add-ons (DNS and rbac)
+      command: microk8s enable dns rbac
+
+- name: Generate and apply join commands for control nodes
+  hosts: control_nodes[0]
+  become: true
+  tasks:
+    - name: Include tasks to handle each control node
+      include_tasks: generate_and_join_control_node.yaml
+      loop: "{{ groups['control_nodes'][1:] }}"
+      loop_control:
+        label: "{{ item }}"
+
+- name: Generate and apply join commands for worker nodes
+  hosts: control_nodes[0]
+  become: true
+  tasks:
+    - name: Include tasks to handle each worker node
+      include_tasks: generate_and_join_worker_node.yaml
+      loop: "{{ groups['worker_nodes'] }}"
+      loop_control:
+        label: "{{ item }}"

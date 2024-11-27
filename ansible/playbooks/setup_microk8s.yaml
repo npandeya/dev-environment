@@ -1,0 +1,23 @@
+- name: Install MicroK8s on all nodes
+  hosts: control_nodes:worker_nodes
+  become: true
+  tasks:
+    - name: Update system packages
+      apt:
+        update_cache: yes
+
+    - name: Install MicroK8s
+      snap:
+        name: microk8s
+        state: present
+        classic: yes
+
+    - name: Add current user to MicroK8s group
+      command: usermod -aG microk8s ubuntu
+      notify: Restart MicroK8s
+
+  handlers:
+    - name: Restart MicroK8s
+      service:
+        name: snap.microk8s.daemon-containerd
+        state: restarted

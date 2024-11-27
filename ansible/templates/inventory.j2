@@ -1,0 +1,13 @@
+[bastion]
+localhost ansible_connection=local
+
+[control_nodes]
+{% for ip in control_nodes_private_ips.value %}
+control{{ loop.index }} ansible_host={{ ip }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/dev-env.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+{% endfor %}
+
+[worker_nodes]
+{% for ip in worker_nodes_private_ips.value %}
+worker{{ loop.index }} ansible_host={{ ip }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/dev-env.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+{% endfor %}
+

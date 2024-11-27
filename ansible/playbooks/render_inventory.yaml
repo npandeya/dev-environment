@@ -1,0 +1,8 @@
+- name: Render inventory file from Jinja2 template
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Render inventory.j2 to inventory.ini
+      template:
+        src: ../templates/inventory.j2
+        dest: ../inventory.ini
