@@ -14,6 +14,7 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 
 # Begin script
 echo "===== Starting the Deployment Script ====="
+
 echo "Log file: $LOG_FILE"
 echo "Timestamp: $(date)"
 
