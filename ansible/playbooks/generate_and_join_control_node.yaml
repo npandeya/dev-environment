@@ -16,3 +16,7 @@
   shell: |
     cat /tmp/control-plane-join-command.txt | bash
   delegate_to: "{{ item }}"
+  register: join_result
+  retries: 5          # Number of retry attempts
+  delay: 10           # Delay (in seconds) between retries
+  until: join_result.rc == 0  # Condition to check for success

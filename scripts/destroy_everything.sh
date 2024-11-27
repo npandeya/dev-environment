@@ -1,5 +1,6 @@
+#!/bin/bash
 cd terraform
-
+terraform init
 # Define ANSI color codes
 RED='\033[1;31m'    # Red color
 NC='\033[0m'        # No Color (reset)

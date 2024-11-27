@@ -19,14 +19,21 @@ Install the following tools on your local machine:
      terraform version
      ```
 
-2. **AWS CLI**
+2. **Ansible**
+   - [Download Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+   - Verify installation:
+     ```bash
+     ansible --version
+     ```
+
+3. **AWS CLI**
    - [AWS CLI Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
    - Verify installation:
      ```bash
      aws --version
      ```
 
-3. **jq**
+4. **jq**
    - Linux:
      ```bash
      sudo apt update && sudo apt install jq -y
@@ -40,7 +47,7 @@ Install the following tools on your local machine:
      jq --version
      ```
 
-4. **SSH Key Management**
+5. **SSH Key Management**
    - Ensure you have `ssh-keygen` available for managing SSH keys.
 
 ---

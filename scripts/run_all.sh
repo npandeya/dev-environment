@@ -8,6 +8,7 @@ TERRAFORM_DIR="terraform"
 PEM_FILE="$HOME/.ssh/dev-env.pem"
 ANSIBLE_DIR="ansible"
 LOG_FILE="run_all.log"
+LOG_DIR="logs"
 
 # Start logging
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -60,7 +61,7 @@ echo "Inventory file generated at $LOCAL_INVENTORY_FILE"
 sleep 10
 
 echo "Copying pem bastion host..."
-scp -o StrictHostKeyChecking=no -i "$PEM_FILE" -r "$PEM_FILE" "$BASTION_HOST:~/.ssh/dev-env.pem"
+scp -i "$PEM_FILE" -r "$PEM_FILE" "$BASTION_HOST:~/.ssh/dev-env.pem"
 
 echo "Copying ansible dir to bastion host..."
 scp -i "$PEM_FILE" -r "$ANSIBLE_DIR" "$BASTION_HOST:$REMOTE_ANSIBLE_DIR"
@@ -104,4 +105,7 @@ ssh -i "$PEM_FILE" "$BASTION_HOST" << EOF
 EOF
 
 echo "All playbooks executed successfully from bastion. Environment is set up!"
-echo "Log file saved at: $LOG_FILE"
+
+mkdir -p $LOG_DIR
+mv $LOG_FILE $LOG_DIR/
+echo "Log file saved at: $LOG_DIR/$LOG_FILE"
