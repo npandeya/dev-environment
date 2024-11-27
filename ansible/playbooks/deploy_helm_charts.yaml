@@ -6,3 +6,19 @@
 
     - name: Update Helm repo
       command: helm repo update
+
+    - name: Ensure deploy.sh is executable
+      file:
+        path: "{{ playbook_dir }}/../../helm/deploy-charts.sh"
+        mode: u+x
+        state: file
+
+    - name: Execute the Helm deploy script
+      command: bash "{{ playbook_dir }}/../../helm/deploy-charts.sh"
+      args:
+        chdir: "{{ playbook_dir }}/../.." 
+      register: script_output
+
+    - name: Display script output
+      debug:
+        var: script_output.stdout

@@ -23,6 +23,7 @@ resource "aws_instance" "control_nodes" {
   instance_type = var.control_instance_type
   subnet_id     = aws_subnet.private.id
   key_name      = var.key_name
+  iam_instance_profile   = aws_iam_instance_profile.ec2_instance_profile.name
 
   security_groups = [aws_security_group.nodes.id]
 
@@ -37,6 +38,7 @@ resource "aws_instance" "worker_nodes" {
   instance_type = var.worker_instance_type
   subnet_id     = aws_subnet.private.id
   key_name      = var.key_name
+  iam_instance_profile   = aws_iam_instance_profile.ec2_instance_profile.name
 
   security_groups = [aws_security_group.nodes.id]
 

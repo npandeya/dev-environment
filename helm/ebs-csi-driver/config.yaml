@@ -1,0 +1,5 @@
+repo_url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+chart_name: aws-ebs-csi-driver
+version: 2.37.0
+namespace: kube-system
+enable: true

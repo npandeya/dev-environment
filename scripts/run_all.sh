@@ -66,6 +66,9 @@ scp -i "$PEM_FILE" -r "$PEM_FILE" "$BASTION_HOST:~/.ssh/dev-env.pem"
 echo "Copying ansible dir to bastion host..."
 scp -i "$PEM_FILE" -r "$ANSIBLE_DIR" "$BASTION_HOST:$REMOTE_ANSIBLE_DIR"
 
+echo "Copying helm dir to bastion host..."
+scp -i "$PEM_FILE" -r helm "$BASTION_HOST:helm"
+
 if [[ $? -ne 0 ]]; then
   echo "Failed to copy inventory file to bastion host. Check the log file for details."
   exit 1
