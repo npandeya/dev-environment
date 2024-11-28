@@ -71,6 +71,15 @@ resource "aws_security_group_rule" "nodes_self_ingress" {
   security_group_id = aws_security_group.nodes.id
 }
 
+resource "aws_security_group_rule" "nodes_self_ingress_udp" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  self              = true
+  security_group_id = aws_security_group.nodes.id
+}
+
 # Allow traffic from the bastion
 resource "aws_security_group_rule" "nodes_from_bastion_ingress" {
   type                     = "ingress"

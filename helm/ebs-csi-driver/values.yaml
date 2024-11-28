@@ -1,2 +1,4 @@
+node:
+  kubeletPath: /var/snap/microk8s/common/var/lib/kubelet
 defaultStorageClass:
   enabled: true
