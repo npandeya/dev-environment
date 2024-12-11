@@ -1,0 +1,23 @@
+port 1194
+proto udp
+dev tun
+ca /etc/openvpn/easy-rsa/pki/ca.crt
+cert /etc/openvpn/easy-rsa/pki/issued/server.crt
+key /etc/openvpn/easy-rsa/pki/private/server.key
+dh none
+topology subnet
+server {{ vpn_subnet }} {{ vpn_netmask }}
+
+# Push route to VPC CIDR
+push "route 10.0.0.0 255.255.0.0"
+
+# Push DNS server (the bastion’s VPN IP running dnsmasq)
+push "dhcp-option DNS {{ vpn_dns_ip }}"
+
+keepalive 10 120
+persist-key
+persist-tun
+user nobody
+group nogroup
+status /var/log/openvpn-status.log
+verb 3

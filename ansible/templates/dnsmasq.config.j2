@@ -1,0 +1,9 @@
+# dnsmasq configuration for forwarding DNS queries
+
+no-resolv
+server=169.254.169.253  # AWS Route 53 Resolver for internal DNS
+server=8.8.8.8          # Google DNS for external DNS
+server=8.8.4.4          # Google DNS for external DNS
+listen-address=127.0.0.1
+listen-address={{ vpn_dns_ip }}
+bind-interfaces

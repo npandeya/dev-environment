@@ -22,5 +22,5 @@
   hosts: control_nodes[0]
   become: true
   tasks:
-    - name: Enable MicroK8s add-ons (DNS and rbac)
+    - name: Enable MicroK8s add-ons (DNS and RBAC)
       command: microk8s enable dns rbac

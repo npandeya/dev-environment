@@ -1,0 +1,20 @@
+client
+dev tun
+proto {{ vpn_proto }}
+remote {{ vpn_remote_host }} {{ vpn_port }}
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+remote-cert-tls server
+verb 3
+
+<ca>
+{{ ca_crt }}
+</ca>
+<cert>
+{{ client_crt }}
+</cert>
+<key>
+{{ client_key }}
+</key>

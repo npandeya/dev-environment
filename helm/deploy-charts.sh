@@ -76,7 +76,7 @@ deploy_chart() {
   # Deploy the Helm chart
   echo "Deploying Helm chart: $chart_name to namespace: $namespace"
   helm upgrade --install "$chart_name" "$base_chart_dir" \
-    --namespace "$namespace" "${values_args[@]}"
+    --namespace "$namespace" --create-namespace "${values_args[@]}"
 
   # Cleanup
   rm -rf "$tmp_chart_dir"
