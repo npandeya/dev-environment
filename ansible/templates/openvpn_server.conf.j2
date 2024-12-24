@@ -11,8 +11,8 @@ server {{ vpn_subnet }} {{ vpn_netmask }}
 # Push route to VPC CIDR
 push "route 10.0.0.0 255.255.0.0"
 
-# Push DNS server (the bastion’s VPN IP running dnsmasq)
-push "dhcp-option DNS {{ vpn_dns_ip }}"
+# Push VPC DNS resolver for Route 53
+push "dhcp-option DNS 10.0.0.2"
 
 keepalive 10 120
 persist-key

@@ -10,11 +10,11 @@ remote-cert-tls server
 verb 3
 
 <ca>
-{{ ca_crt }}
+{{ ca_crt.strip() }}
 </ca>
 <cert>
-{{ client_crt }}
+{{ client_crt.strip() }}
 </cert>
 <key>
-{{ client_key }}
+{{ client_key.strip() }}
 </key>

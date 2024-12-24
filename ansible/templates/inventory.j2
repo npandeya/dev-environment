@@ -1,5 +1,5 @@
 [bastion]
-localhost ansible_connection=local
+localhost ansible_connection=local ansible_host={{ bastion_public_ip.value }}
 
 [control_nodes]
 {% for ip in control_nodes_private_ips.value %}

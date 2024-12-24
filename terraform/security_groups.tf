@@ -32,6 +32,15 @@ resource "aws_security_group_rule" "bastion_ssh_ingress" {
   security_group_id        = aws_security_group.bastion.id
 }
 
+resource "aws_security_group_rule" "bastion_openvpn_ingress" {
+  type                     = "ingress"
+  from_port                = 1194
+  to_port                  = 1194
+  protocol                 = "udp"
+  cidr_blocks              = ["${trimspace(data.http.my_ip.response_body)}/32"]
+  security_group_id        = aws_security_group.bastion.id
+}
+
 # Allow all traffic to/from nodes
 resource "aws_security_group_rule" "bastion_to_nodes_ingress" {
   type                     = "ingress"
@@ -59,6 +68,16 @@ resource "aws_security_group_rule" "bastion_internet_egress" {
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.bastion.id
+}
+
+# Allow inbound anywhere from node 
+resource "aws_security_group_rule" "node_inbound_vpc" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = [aws_vpc.main.cidr_block]
+  security_group_id = aws_security_group.node.id
 }
 
 # Allow all traffic between nodes

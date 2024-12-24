@@ -103,6 +103,7 @@ main() {
       if [[ "$enabled" == "true" ]]; then
         echo "Chart is enabled. Deploying $chart_dir..."
         deploy_chart "$chart_dir"
+        sleep 10
       else
         echo "Chart is disabled. Skipping $chart_dir."
       fi

@@ -2,17 +2,12 @@
   hosts: bastion
   become: true
   vars:
-    # VPN and PKI vars
-    openvpn_dir: /etc/openvpn
-    pki_dir: /etc/openvpn/easy-rsa/pki
-    client_name: "client1"
     vpn_subnet: "10.8.0.0"
     vpn_netmask: "255.255.255.0"
-    vpc_cidr: "10.0.0.0/16"
-    # Adjust this interface if your bastion's default gateway interface differs
-    bastion_interface: "eth0"
-    # DNS forwarder IP (the VPN server's tun interface)
-    vpn_dns_ip: "10.8.0.1"
+    vpn_proto: "udp"
+    vpn_port: 1194
+    client_name: "client1"
+
   tasks:
     # Install dependencies
     - name: Install dependencies
@@ -116,180 +111,131 @@
         line: "source /home/ubuntu/.kube_aliases"
         state: present
 
-  #   # ---------------------------------------
-  #   # OPENVPN INSTALLATION AND CONFIGURATION
-  #   # ---------------------------------------
-  #   - name: Install OpenVPN and EasyRSA
-  #     apt:
-  #       name:
-  #         - openvpn
-  #         - easy-rsa
-  #       state: present
-  #       update_cache: yes
+    # ---------------------------------------
+    # OPENVPN INSTALLATION AND CONFIGURATION
+    # ---------------------------------------
+    - name: Install OpenVPN and EasyRSA
+      apt:
+        name:
+          - openvpn
+          - easy-rsa
+          - net-tools
+        state: present
+        update_cache: yes
 
-  #   - name: Ensure easy-rsa directory exists
-  #     file:
-  #       path: /etc/openvpn/easy-rsa
-  #       state: directory
+    # Configure EasyRSA for PKI
+    - name: Ensure easy-rsa directory exists
+      file:
+        path: /etc/openvpn/easy-rsa
+        state: directory
 
-  #   # Use shell so wildcard expands
-  #   - name: Copy EasyRSA files
-  #     shell: cp -r /usr/share/easy-rsa/* /etc/openvpn/easy-rsa/
-  #     args:
-  #       executable: /bin/bash
-  #     # Remove 'creates' here since we rely on stat below, or if you know it always exists, you can skip
-  #     # If /usr/share/easy-rsa does not exist, verify easy-rsa installation paths.
-    
-  #   - name: Initialize PKI
-  #     command: ./easyrsa init-pki
-  #     args:
-  #       chdir: /etc/openvpn/easy-rsa
-  #       creates: /etc/openvpn/easy-rsa/pki
+    - name: Copy EasyRSA files
+      shell: cp -r /usr/share/easy-rsa/* /etc/openvpn/easy-rsa/
+      args:
+        executable: /bin/bash
 
-  #   - name: Check if CA exists
-  #     stat:
-  #       path: /etc/openvpn/easy-rsa/pki/ca.crt
-  #     register: ca_crt_stat
+    - name: Initialize PKI
+      command: ./easyrsa init-pki
+      args:
+        chdir: /etc/openvpn/easy-rsa
+        creates: /etc/openvpn/easy-rsa/pki
 
-  #   - name: Build CA (non-interactive)
-  #     command: ./easyrsa build-ca nopass
-  #     args:
-  #       chdir: /etc/openvpn/easy-rsa
-  #     environment:
-  #       EASYRSA_BATCH: "1"
-  #       EASYRSA_REQ_CN: "My Easy-RSA CA"
-  #     when: not ca_crt_stat.stat.exists
+    - name: Check if CA exists
+      stat:
+        path: /etc/openvpn/easy-rsa/pki/ca.crt
+      register: ca_crt_stat
 
-  #   - name: Check if Server cert exists
-  #     stat:
-  #       path: /etc/openvpn/easy-rsa/pki/issued/server.crt
-  #     register: server_crt_stat
+    - name: Build CA (non-interactive)
+      command: ./easyrsa build-ca nopass
+      args:
+        chdir: /etc/openvpn/easy-rsa
+      environment:
+        EASYRSA_BATCH: "1"
+        EASYRSA_REQ_CN: "My Easy-RSA CA"
+      when: not ca_crt_stat.stat.exists
 
-  #   - name: Generate server certificate
-  #     command: ./easyrsa build-server-full server nopass
-  #     args:
-  #       chdir: /etc/openvpn/easy-rsa
-  #     environment:
-  #       EASYRSA_BATCH: "1"
-  #     when: not server_crt_stat.stat.exists
+    - name: Check if Server cert exists
+      stat:
+        path: /etc/openvpn/easy-rsa/pki/issued/server.crt
+      register: server_crt_stat
 
-  #   - name: Check if Client cert exists
-  #     stat:
-  #       path: /etc/openvpn/easy-rsa/pki/issued/{{ client_name }}.crt
-  #     register: client_crt_stat
+    - name: Generate server certificate
+      command: ./easyrsa build-server-full server nopass
+      args:
+        chdir: /etc/openvpn/easy-rsa
+      environment:
+        EASYRSA_BATCH: "1"
+      when: not server_crt_stat.stat.exists
 
-  #   - name: Generate client certificate
-  #     command: ./easyrsa build-client-full {{ client_name }} nopass
-  #     args:
-  #       chdir: /etc/openvpn/easy-rsa
-  #     environment:
-  #       EASYRSA_BATCH: "1"
-  #     when: not client_crt_stat.stat.exists
+    - name: Check if Client cert exists
+      stat:
+        path: /etc/openvpn/easy-rsa/pki/issued/{{ client_name }}.crt
+      register: client_crt_stat
 
-  #   - name: Place server.conf
-  #     template:
-  #       src: ../templates/openvpn_server.conf.j2
-  #       dest: /etc/openvpn/server.conf
-  #     notify: Restart OpenVPN
+    - name: Generate client certificate
+      command: ./easyrsa build-client-full {{ client_name }} nopass
+      args:
+        chdir: /etc/openvpn/easy-rsa
+      environment:
+        EASYRSA_BATCH: "1"
+      when: not client_crt_stat.stat.exists
 
-  #   - name: Enable IP forwarding
-  #     sysctl:
-  #       name: net.ipv4.ip_forward
-  #       value: '1'
-  #       state: present
-  #       reload: yes
+    # OpenVPN server configuration
+    - name: Place server.conf
+      template:
+        src: ../templates/openvpn_server.conf.j2
+        dest: /etc/openvpn/server.conf
+      notify: Restart OpenVPN
 
-  #   - name: Set up NAT via iptables
-  #     shell: iptables -t nat -A POSTROUTING -s {{ vpn_subnet }}/24 -o {{ bastion_interface }} -j MASQUERADE
-  #     args:
-  #       executable: /bin/bash
+    - name: Enable IP forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        state: present
+        reload: yes
 
-  #   - name: Start and enable openvpn
-  #     service:
-  #       name: openvpn@server
-  #       state: started
-  #       enabled: yes
+    - name: Set up NAT via iptables
+      shell: iptables -t nat -A POSTROUTING -s {{ vpn_subnet }}/24 -o eth0 -j MASQUERADE
+      args:
+        executable: /bin/bash
 
-  #   # ---------------------------------------
-  #   # DNSMASQ FOR PRIVATE DNS (ROUTE 53)
-  #   # ---------------------------------------
-  #   - name: Stop systemd-resolved service
-  #     systemd:
-  #       name: systemd-resolved
-  #       state: stopped
-  #       enabled: no
-  #   - name: Remove existing resolv.conf symlink
-  #     file:
-  #       path: /etc/resolv.conf
-  #       state: absent
-  #       force: yes
-  #   - name: Create new resolv.conf pointing to dnsmasq
-  #     copy:
-  #       dest: /etc/resolv.conf
-  #       content: |
-  #         nameserver 127.0.0.1
-  #         nameserver 8.8.8.8
-  #         nameserver 8.8.4.4
-  #       owner: root
-  #       group: root
-  #       mode: '0644'
+    - name: Start and enable OpenVPN service
+      service:
+        name: openvpn@server
+        state: started
+        enabled: yes
 
-  #   - name: Install dnsmasq
-  #     apt:
-  #       name: dnsmasq
-  #       state: present
-  #       update_cache: yes
+    # Generate client configuration file
+    - name: Read CA cert
+      slurp:
+        src: /etc/openvpn/easy-rsa/pki/ca.crt
+      register: ca_crt_file
 
-  #   - name: Configure dnsmasq
-  #     template:
-  #       src: ../templates/dnsmasq.conf.j2
-  #       dest: /etc/dnsmasq.conf
-  #     notify: Restart dnsmasq
+    - name: Read client cert
+      slurp:
+        src: /etc/openvpn/easy-rsa/pki/issued/{{ client_name }}.crt
+      register: client_crt_file
 
-  #   - name: Restart dnsmasq
-  #     service:
-  #       name: dnsmasq
-  #       state: restarted
-  #       enabled: yes
+    - name: Read client key
+      slurp:
+        src: /etc/openvpn/easy-rsa/pki/private/{{ client_name }}.key
+      register: client_key_file
 
-  #   # Gather CA and Client certs for client config
-  #   - name: Read CA cert
-  #     slurp:
-  #       src: "{{ pki_dir }}/ca.crt"
-  #     register: ca_crt_file
+    - name: Create client ovpn file
+      template:
+        src: ../templates/client_config.ovpn.j2
+        dest: /home/ubuntu/{{ client_name }}.ovpn
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+      vars:
+        ca_crt: "{{ ca_crt_file.content | b64decode }}"
+        client_crt: "{{ client_crt_file.content | b64decode }}"
+        client_key: "{{ client_key_file.content | b64decode }}"
+        vpn_remote_host: "{{ hostvars[inventory_hostname].ansible_host }}"
 
-  #   - name: Read client cert
-  #     slurp:
-  #       src: "{{ pki_dir }}/issued/{{ client_name }}.crt"
-  #     register: client_crt_file
-
-  #   - name: Read client key
-  #     slurp:
-  #       src: "{{ pki_dir }}/private/{{ client_name }}.key"
-  #     register: client_key_file
-
-  #   - name: Create client ovpn file
-  #     template:
-  #       src: ../templates/client_config.ovpn.j2
-  #       dest: /home/ubuntu/{{ client_name }}.ovpn
-  #       owner: ubuntu
-  #       group: ubuntu
-  #       mode: '0600'
-  #     vars:
-  #       ca_crt: "{{ ca_crt_file.content | b64decode }}"
-  #       client_crt: "{{ client_crt_file.content | b64decode }}"
-  #       client_key: "{{ client_key_file.content | b64decode }}"
-  #       vpn_remote_host: "{{ hostvars[inventory_hostname].ansible_host }}"
-  #       vpn_port: 1194
-  #       vpn_proto: "udp"
-
-  # handlers:
-  #   - name: Restart OpenVPN
-  #     service:
-  #       name: openvpn@server
-  #       state: restarted
-
-  #   - name: Restart dnsmasq
-  #     service:
-  #       name: dnsmasq
-  #       state: restarted
+  handlers:
+    - name: Restart OpenVPN
+      service:
+        name: openvpn@server
+        state: restarted
