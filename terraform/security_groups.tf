@@ -77,7 +77,7 @@ resource "aws_security_group_rule" "node_inbound_vpc" {
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = [aws_vpc.main.cidr_block]
-  security_group_id = aws_security_group.node.id
+  security_group_id = aws_security_group.nodes.id
 }
 
 # Allow all traffic between nodes

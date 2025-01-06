@@ -194,10 +194,46 @@
         state: present
         reload: yes
 
-    - name: Set up NAT via iptables
-      shell: iptables -t nat -A POSTROUTING -s {{ vpn_subnet }}/24 -o eth0 -j MASQUERADE
+    - name: Get default network interface
+      set_fact:
+        network_interface: "{{ ansible_default_ipv4.interface }}"
+    
+    - name: Allow all traffic from the VPN subnet to any destination
+      shell: |
+        iptables -A FORWARD -s {{ vpn_subnet }}/24 -j ACCEPT
+        iptables -A FORWARD -d {{ vpn_subnet }}/24 -j ACCEPT
       args:
         executable: /bin/bash
+
+    - name: Set up NAT for VPN subnet
+      shell: |
+        iptables -t nat -A POSTROUTING -s {{ vpn_subnet }}/24 -o {{ network_interface }} -j MASQUERADE
+      args:
+        executable: /bin/bash
+
+    - name: Ensure iptables rules directory exists
+      file:
+        path: /etc/iptables
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Save iptables rules
+      shell: iptables-save > /etc/iptables/rules.v4
+      args:
+        executable: /bin/bash
+
+    - name: Install iptables-persistent to ensure rules persist across reboots
+      apt:
+        name: iptables-persistent
+        state: present
+        update_cache: yes
+
+    # - name: Set up NAT via iptables
+    #   shell: iptables -t nat -A POSTROUTING -s {{ vpn_subnet }}/24 -o eth0 -j MASQUERADE
+    #   args:
+    #     executable: /bin/bash
 
     - name: Start and enable OpenVPN service
       service:

@@ -33,7 +33,8 @@ resource "aws_subnet" "private" {
   availability_zone       = "us-east-1a"
 
   tags = {
-    Name = "Private Subnet"
+    Name = "Private Subnet",
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
