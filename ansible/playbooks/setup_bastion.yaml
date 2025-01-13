@@ -268,7 +268,7 @@
         ca_crt: "{{ ca_crt_file.content | b64decode }}"
         client_crt: "{{ client_crt_file.content | b64decode }}"
         client_key: "{{ client_key_file.content | b64decode }}"
-        vpn_remote_host: "{{ hostvars[inventory_hostname].ansible_host }}"
+        vpn_remote_host: "{{ hostvars[inventory_hostname].ansible_host }}"  
 
   handlers:
     - name: Restart OpenVPN

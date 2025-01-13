@@ -1,0 +1,76 @@
+certmanager-issuer:
+  email: "gitlabadmin@nimesh.lab"
+global:
+  edition: ce
+  hosts:
+    domain: nimesh.lab  # Replace with your actual domain
+    gitlab:
+      name: gitlab.nimesh.lab  # GitLab's main webservice domain
+    registry:
+      name: registry.nimesh.lab  # GitLab's Container Registry domain
+
+  ingress:
+    enabled: true  # Enable ingress for GitLab components
+    configureCertmanager: true 
+    class: nginx
+    tls:
+      enabled: true  # Set to true if HTTPS is needed
+    path: /
+    pathType: Prefix
+
+nginx-ingress:
+  enabled: false  # Disable GitLab's built-in NGINX ingress controller
+
+gitlab:
+  webservice:
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"  # Match your external ingress class
+    service:
+      type: ClusterIP  # Expose as ClusterIP
+  registry:
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"  # Match your external ingress class
+    service:
+      type: ClusterIP  # Expose as ClusterIP
+  sidekiq:
+    service:
+      type: ClusterIP  # Internal service, no ingress needed
+  gitaly:
+    service:
+      type: ClusterIP  # Internal service, no ingress needed
+  minio:
+    ingress:
+      enabled: false  # MinIO does not need external ingress
+    service:
+      type: ClusterIP  # Expose as ClusterIP
+  kas:
+    ingress:
+      enabled: false  # GitLab KAS does not need external ingress unless explicitly required
+    service:
+      type: ClusterIP  # Expose as ClusterIP
+  gitlab-shell:
+    service:
+      type: ClusterIP  # Expose as ClusterIP
+
+redis:
+  auth:
+    enabled: true
+  service:
+    type: ClusterIP
+
+postgresql:
+  service:
+    type: ClusterIP
+
+gitlab-runner:
+  install: true
+  gitlabUrl: "http://gitlab-webservice-default.gitlab.svc.cluster.local:8080"
+  rbac:
+    create: true
+  runners:
+    privileged: true
+    secret: "nonempty"
+    # This is TOML passed to the runner:
+
