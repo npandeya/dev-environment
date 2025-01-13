@@ -1,7 +1,7 @@
 certmanager-issuer:
   email: "gitlabadmin@nimesh.lab"
 global:
-  edition: ce
+  edition: ee
   hosts:
     domain: nimesh.lab  # Replace with your actual domain
     gitlab:
