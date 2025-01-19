@@ -1,0 +1,51 @@
+stages:
+  - sbom
+  - scan
+
+variables:
+  IMAGE_LIST: "nginx:latest alpine:3.17 python:3.11-slim" # Space-separated list of images to scan
+
+# Generate SBOMs for each image with Syft
+generate-sboms:
+  stage: sbom
+  image: ubuntu:25.04
+  before_script:
+    - apt update
+    - apt install curl -y 
+    - curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+  script:
+    - mkdir -p sbom
+    - for IMAGE in $IMAGE_LIST; do
+        echo "Showing SBOM for $IMAGE...";
+        syft $IMAGE -o syft-table;
+        echo "=========================================";
+        echo "Generating SBOM for $IMAGE...";
+        syft $IMAGE -o syft-json > "sbom/sbom-${IMAGE//[:\/]/_}.json";
+      done
+  artifacts:
+    paths:
+      - sbom
+    expire_in: 1 week
+
+# Scan each image for vulnerabilities with Grype
+vulnerability-scan:
+  stage: scan
+  image: ubuntu:25.04
+  before_script:
+    - apt update
+    - apt install curl -y 
+    - curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+  script:
+    - for IMAGE in $IMAGE_LIST; do
+        SBOM_FILE="sbom/sbom-${IMAGE//[:\/]/_}.json";
+        echo "Scanning vulnerabilities for $IMAGE...";
+        if [ -f "$SBOM_FILE" ]; then
+          grype sbom:$SBOM_FILE -o table;
+        else
+          echo "SBOM for $IMAGE not found!";
+          exit 1;
+        fi
+      done
+  dependencies:
+    - generate-sboms
+  allow_failure: true

@@ -66,11 +66,16 @@ postgresql:
 
 gitlab-runner:
   install: true
-  gitlabUrl: "http://gitlab-webservice-default.gitlab.svc.cluster.local:8080"
+  gitlabUrl: "http://gitlab-webservice-default.gitlab.svc.cluster.local:8181"
   rbac:
     create: true
   runners:
     privileged: true
     secret: "nonempty"
+    config: |
+      [[runners]]
+        environment = ["GIT_SSL_NO_VERIFY=1"]
+        [runners.kubernetes]
+          namespace = "{{.Release.Namespace}}"
+          image = "alpine"
     # This is TOML passed to the runner:
-

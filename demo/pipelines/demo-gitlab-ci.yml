@@ -1,0 +1,47 @@
+image: node:14
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_HOST: tcp://docker:2376/
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - build
+  - test
+  - deploy
+
+before_script:
+  - echo "Starting job on Kubernetes executor..."
+
+build:
+  stage: build
+  script:
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+  tags:
+    - kubernetes
+
+test:
+  stage: test
+  script:
+    - npm run test
+  dependencies:
+    - build
+  tags:
+    - kubernetes
+
+deploy:
+  stage: deploy
+  script:
+    - kubectl apply -f k8s/deployment.yaml
+  environment:
+    name: production
+  only:
+    - master
+  tags:
+    - kubernetes
