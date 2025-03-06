@@ -1,0 +1,1 @@
+aws ec2 describe-volumes --filters "Name=status,Values=available" --query "Volumes[].VolumeId" --output text | xargs -n1 aws ec2 delete-volume --volume-id

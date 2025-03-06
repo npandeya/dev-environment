@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: time-app
+  labels:
+    app: time-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: time-app
+  template:
+    metadata:
+      labels:
+        app: time-app
+    spec:
+      containers:
+        - name: time-app
+          image: busybox
+          command: ["sh", "-c", "while true; do date; sleep 1; done"

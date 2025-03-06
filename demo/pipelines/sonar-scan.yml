@@ -1,0 +1,9 @@
+stage:
+  - sonar-scan
+variables:
+  SONAR_SCANNER_OPTS: "-Djavax.net.ssl.trustStorePassword="
+code-scan:
+  stage: sonar-scan
+  image: sonarsource/sonar-scanner-cli:11.1
+  script:
+    - sonar-scanner -Dsonar.host.url=http://<service domain of sonarqube> -Dsonar.login=squ_cebcd4d7457ad140127cfdb421a2de630c3e6374 <gitla cicd variables>

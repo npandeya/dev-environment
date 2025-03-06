@@ -78,4 +78,5 @@ gitlab-runner:
         [runners.kubernetes]
           namespace = "{{.Release.Namespace}}"
           image = "alpine"
+          privileged = true
     # This is TOML passed to the runner:
