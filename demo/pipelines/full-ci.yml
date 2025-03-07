@@ -1,0 +1,33 @@
+stages:
+  - scan
+  - build
+variables:
+  SONAR_SCANNER_OPTS: "-Djavax.net.ssl.trustStorePassword="
+sonar-scan:
+  stage: scan
+  image: sonarsource/sonar-scanner-cli:11.1
+  script:
+    - sonar-scanner -Dsonar.host.url=http://sonarqube.nimesh.lab -Dsonar.login=${TOKEN}
+
+docker-build-dev:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    HEALTHCHECK_TCP_PORT: "2375"
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_DAEMON_ARGS: "--host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock --storage-driver=overlay2"
+  before_script:
+  - sleep 30
+  - docker info
+  script:
+    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+    - docker build -t $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA .
+    - docker push $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA
+    - docker tag $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA $DOCKER_USERNAME/snake-app:dev-latest
+    - docker push $DOCKER_USERNAME/snake-app:dev-latest
+  only:
+    - develop
