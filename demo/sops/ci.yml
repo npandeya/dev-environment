@@ -1,0 +1,29 @@
+stages:
+  - decrypt
+  - use_secret
+
+decrypt_secrets:
+  image: ghcr.io/getsops/sops:v3.9.4
+  stage: decrypt
+  script:
+    # Import the GPG key from GitLab CI/CD variable
+    - echo "$SOPS_GPG_KEY" | gpg --import
+
+    # Decrypt the secrets file and load them into environment variables
+    - eval "$(sops --decrypt secrets.yaml | sed 's/^/export /')"
+
+    # ✅ DO NOT echo actual secrets — only confirm success
+    - echo "✅ Secrets decrypted and loaded into environment variables"
+  only:
+    - main
+
+use_secret:
+  image: alpine
+  stage: use_secret
+  script:
+    # Use the secrets directly from environment variables
+    - echo "🚀 Using API key to deploy..."
+    - curl -X POST "https://example.com/deploy" -H "Authorization: Bearer $API_KEY"
+    - echo "✅ Deployment completed"
+  only:
+    - main
