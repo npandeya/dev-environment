@@ -11,6 +11,11 @@
         name: microk8s
         state: present
         classic: yes
+      register: result
+      until: result is succeeded
+      retries: 3
+      delay: 5
+      
 
     - name: Add current user to MicroK8s group
       command: usermod -aG microk8s ubuntu
