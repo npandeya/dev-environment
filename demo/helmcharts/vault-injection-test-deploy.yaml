@@ -26,12 +26,17 @@ spec:
             {{- end }}
 
           vault.hashicorp.com/agent-inject-permissions-license.json: "0644"
-          # vault.hashicorp.com/agent-inject-file-license.json: "/usr/share/nginx/html/license.json"
-          vault.hashicorp.com/secret-volume-path: "/usr/share/nginx/html"
+          # vault.hashicorp.com/secret-volume-path: "/usr/share/nginx/html"
     spec:
       serviceAccountName: snake-game
       containers:
         - name: test-container
           image: npandeya/snake-app:dev-latest
           command: [ "sh", "-c", "sleep 3600" ]
-
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - "sh"
+                  - "-c"
+                  - "ln -sf /vault/secrets/license.json /usr/share/nginx/html/license.json"
