@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-injector-test
+  namespace: snake-game
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-injector-test
+  template:
+    metadata:
+      labels:
+        app: vault-injector-test
+      annotations:
+          vault.hashicorp.com/agent-inject: 'true'
+          vault.hashicorp.com/role: 'snake-game'
+          vault.hashicorp.com/agent-inject-secret-license.json: "secret/data/snake-license"
+          vault.hashicorp.com/agent-inject-template-license.json: |
+            {{- with secret "secret/data/snake-license" -}}
+            {
+              "key": "{{ .Data.data.key }}",
+              "name": "{{ .Data.data.name }}",
+              "isValid": {{ .Data.data.isValid }}
+            }
+            {{- end }}
+
+          vault.hashicorp.com/agent-inject-permissions-license.json: "0644"
+          # vault.hashicorp.com/agent-inject-file-license.json: "/usr/share/nginx/html/license.json"
+          vault.hashicorp.com/secret-volume-path: "/usr/share/nginx/html"
+    spec:
+      serviceAccountName: snake-game
+      containers:
+        - name: test-container
+          image: npandeya/snake-app:dev-latest
+          command: [ "sh", "-c", "sleep 3600" ]
+

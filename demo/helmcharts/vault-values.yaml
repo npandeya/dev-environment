@@ -1,0 +1,14 @@
+global:
+  namespace: vault 
+server:
+  dev:
+    enabled: true 
+  ingress:
+    enabled: true 
+    ingressClassName: nginx
+    hosts:
+    - host: vault.nimesh.lab
+injector:
+  enabled: true 
+csi:
+  enabled: false 
