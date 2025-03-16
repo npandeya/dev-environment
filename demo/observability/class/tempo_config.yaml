@@ -1,0 +1,4 @@
+traces:
+  retention_period: 7d
+  ingester:
+    parallelism: 4
