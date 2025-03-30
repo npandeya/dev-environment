@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: important-pod-crash-alert
+  namespace: observability
+  labels:
+    release: kube-prom-stack
+spec:
+  groups:
+  - name: important-pod.rules
+    rules:
+    - alert: ImportantPodCrashLoopBackOffOrError
+      expr: |
+        max_over_time(
+          kube_pod_container_status_waiting_reason{pod=~"important-pod.*", reason=~"CrashLoopBackOff|Error"}[5m]
+        ) >= 1
+      for: 30s
+      labels:
+        severity: critical
+        alert: slack
+      annotations:
+        summary: "Important pod is crashing or in error state"
+        description: "Pod '{{ $labels.pod }}' in namespace '{{ $labels.namespace }}' is in {{ $labels.reason }} state for more than 30 seconds."

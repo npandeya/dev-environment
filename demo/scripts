@@ -1,0 +1,21 @@
+twistcli sbom  <image> > sbom.json 
+
+---
+App of Apps Demo: 
+- Dev Environment 
+- ArgoCD Up
+- Gitlab Up
+- Snake Game Up (with the whole CICD Pipeline)
+
+* Create App of Apps Repository 
+* Deploy App of Apps with Pipeline 
+** Add on existing CI pipeline in SnakeGame 
+* Onboard Snake Game ArgoApp 
+* Deploy Snake Game ArgoApp
+* Rest of the stuff .. 
+
+-- NeuVector 
+
+-- OWASP ZAP with Juice Shop -- me sharing screen and showing .. 
+
+- Cover automation scripts on dev-environment
