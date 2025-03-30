@@ -71,7 +71,7 @@ receivers:
 - name: "null"
 - name: 'slack-notification'
   slack_configs:
-      - api_url: 'https://hooks.slack.com/services/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'
+      - api_url: 'https://hooks.slack.com/services/T02XXX/B08LMXXXE48/7SpPXcXXXEI1041nHN'  # Invalid URL as it has secret
         channel: '#devesecops-engineering-pilot-class'
         send_resolved: true
         title: '{{ .CommonLabels.alertname }} - {{ .Status }}'

@@ -25,7 +25,7 @@ receivers:
 - name: "null"
 - name: 'slack-notification'
   slack_configs:
-      - api_url: 'https://hooks.slack.com/services/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'
+      - api_url: 'https://hooks.slack.com/services/T0XXXXXX/B0XXXXXX5E48/7SXXXXXXXXX1nHN'
         channel: '#devesecops-engineering-pilot-class'
         send_resolved: true
         title: '{{ .CommonLabels.alertname }} - {{ .Status }}'
