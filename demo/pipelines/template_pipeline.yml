@@ -1,0 +1,132 @@
+stages:
+  - sonarqube
+  - build
+  - sbom
+  - scan
+  - docker-final
+  - deploy
+
+.docker: &docker
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    HEALTHCHECK_TCP_PORT: "2375"
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_DAEMON_ARGS: "--host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock --storage-driver=overlay2"
+  before_script:
+    - |
+      echo "Waiting for Docker to be ready..."
+      until docker info &>/dev/null; do
+        echo -n "."
+        sleep 2
+      done
+      echo "Docker is ready!"
+    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+
+# sonarqube:
+#   stage: sonarqube
+#   image: sonarsource/sonar-scanner-cli:11.1
+#   script:
+#     - |
+#       sonar-scanner \
+#         -Dsonar.host.url=http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+#         -Dsonar.login=$SONAR_TOKEN
+
+docker-build-dev:
+  stage: build
+  <<: *docker
+  script:
+    - docker build -t $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA .
+    - docker push $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA
+  only:
+    - develop
+
+docker-build-main:
+  stage: build
+  <<: *docker
+  script:
+    - docker build -t $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA .
+    - docker push $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA
+  only:
+    - main
+
+generate-sboms:
+  stage: sbom
+  image: ubuntu:22.04
+  before_script:
+    - apt update
+    - apt install -y curl
+    - curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+  script:
+    - mkdir -p sbom
+    - echo "Showing SBOM for $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA.."
+    - syft $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA -o syft-table
+    - syft $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA -o syft-json > sbom/sbom-snake-game.json
+
+  artifacts:
+    paths:
+      - sbom
+    expire_in: 1 week
+
+vulnerability-scan:
+  stage: scan
+  image: ubuntu:22.04
+  before_script:
+    - apt update
+    - apt install -y curl
+    - curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+  script:
+    - SBOM_FILE="sbom/sbom-snake-game.json"
+    - grype sbom:$SBOM_FILE -o table
+
+  dependencies:
+    - generate-sboms
+  allow_failure: true
+
+docker-dev-final:
+  stage: docker-final
+  <<: *docker
+  script:
+    - docker pull $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA
+    - docker tag $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA $DOCKER_USERNAME/snake-app:dev-latest
+    - docker push $DOCKER_USERNAME/snake-app:dev-latest
+  only:
+    - develop
+
+docker-main-final:
+  stage: docker-final
+  <<: *docker
+  script:
+    - docker pull $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA
+    - docker tag $DOCKER_USERNAME/snake-app:$CI_COMMIT_SHORT_SHA $DOCKER_USERNAME/snake-app:latest
+    - docker push $DOCKER_USERNAME/snake-app:latest
+  only:
+    - main
+
+generate-deployment:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - apk add --no-cache gettext git
+    - ls -al
+    - pwd
+    # Configure Git
+    - git config --global user.email "gitlab-ci@nimesh.lab"
+    - git config --global user.name "GitLab CI"
+    - git checkout $CI_COMMIT_REF_NAME
+    - git stash
+    - git config pull.rebase true
+    - git pull
+    - export IMAGE_TAG=${CI_COMMIT_SHORT_SHA}
+    - echo "${CI_COMMIT_SHORT_SHA}"
+    - envsubst < k8s_template/deployment.tpl > k8s/deployment.yaml
+    
+    # Add and commit the file
+    - git add .
+    - git commit -m "Generated k8s/config.yaml from template"
+    # Push using GitLab CI token
+    - git push https://gitlab-ci-token:${CI_TOKEN}@${CI_REPOSITORY_URL#*@}
+
